@@ -1,0 +1,75 @@
+/* Design tokens — dark is the default identity, light is a full parallel theme. */
+:root {
+  --font-sans: 'Geist Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'Geist Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --accent: #8B5CF6;
+  --accent-strong: #7C3AED;
+  --accent-2: #22D3EE;
+  --accent-soft: rgba(139, 92, 246, .14);
+  --accent-grad: linear-gradient(135deg, #8B5CF6 0%, #6D5BF6 45%, #22D3EE 130%);
+
+  --success: #34D399; --success-soft: rgba(52, 211, 153, .14);
+  --warning: #FBBF24; --warning-soft: rgba(251, 191, 36, .14);
+  --danger: #FB7185;  --danger-soft: rgba(251, 113, 133, .14);
+  --info: #22D3EE;    --info-soft: rgba(34, 211, 238, .13);
+
+  --radius-xs: 8px; --radius-sm: 10px; --radius: 14px; --radius-lg: 20px;
+  --ease: cubic-bezier(.16, 1, .3, 1);
+  --sidebar-w: 248px;
+  --topbar-h: 68px;
+  color-scheme: dark;
+}
+
+:root, :root[data-theme='dark'] {
+  --bg: #070A14;
+  --surface: rgba(18, 23, 42, .72);
+  --surface-solid: #11172A;
+  --surface-2: rgba(255, 255, 255, .035);
+  --surface-hover: rgba(255, 255, 255, .06);
+  --surface-raised: #1A2142;
+  --line: rgba(255, 255, 255, .075);
+  --line-strong: rgba(255, 255, 255, .14);
+  --text: #EEF1FB;
+  --text-2: #AAB3CC;
+  --text-3: #8089A8;
+  --accent-text: #C4B5FD;
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, .05) inset, 0 18px 40px -22px rgba(0, 0, 0, .75);
+  --shadow-pop: 0 24px 60px -16px rgba(0, 0, 0, .7), 0 0 0 1px rgba(255, 255, 255, .06);
+  --ambient-a: rgba(124, 58, 237, .30);
+  --ambient-b: rgba(34, 211, 238, .16);
+  --grid-line: rgba(255, 255, 255, .035);
+  --input-bg: rgba(255, 255, 255, .04);
+  --scrim: rgba(4, 6, 14, .66);
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  --bg: #F3F4FA;
+  --surface: rgba(255, 255, 255, .82);
+  --surface-solid: #FFFFFF;
+  --surface-2: rgba(20, 24, 60, .035);
+  --surface-hover: rgba(20, 24, 60, .06);
+  --surface-raised: #FFFFFF;
+  --line: rgba(22, 28, 66, .09);
+  --line-strong: rgba(22, 28, 66, .18);
+  --text: #12162B;
+  --text-2: #444C6B;
+  --text-3: #67708F;
+  --accent: #6D45E8;
+  --accent-strong: #5B30D6;
+  --accent-soft: rgba(109, 69, 232, .10);
+  --accent-text: #5B30D6;
+  --success: #0E9F6E; --success-soft: rgba(14, 159, 110, .11);
+  --warning: #B7791F; --warning-soft: rgba(217, 119, 6, .12);
+  --danger: #DC2646;  --danger-soft: rgba(220, 38, 70, .09);
+  --info: #0891B2;    --info-soft: rgba(8, 145, 178, .10);
+  --shadow-card: 0 1px 2px rgba(22, 28, 66, .05), 0 14px 32px -20px rgba(40, 48, 110, .28);
+  --shadow-pop: 0 22px 50px -14px rgba(30, 36, 90, .3), 0 0 0 1px rgba(22, 28, 66, .06);
+  --ambient-a: rgba(124, 58, 237, .13);
+  --ambient-b: rgba(34, 211, 238, .12);
+  --grid-line: rgba(22, 28, 66, .045);
+  --input-bg: #FFFFFF;
+  --scrim: rgba(20, 24, 50, .36);
+  color-scheme: light;
+}

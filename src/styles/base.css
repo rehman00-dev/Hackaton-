@@ -1,0 +1,80 @@
+*, *::before, *::after { box-sizing: border-box; }
+html { overflow-x: clip; overscroll-behavior-x: none; -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; min-width: 320px; min-height: 100vh;
+  font-family: var(--font-sans); font-size: 14px; line-height: 1.5;
+  color: var(--text); background: var(--bg);
+  font-synthesis: none; text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+  transition: background-color .3s ease, color .3s ease;
+}
+h1, h2, h3, p { margin: 0; }
+h1, h2, h3 { letter-spacing: -.02em; line-height: 1.2; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+code { font-family: var(--font-mono); }
+a { color: inherit; }
+img { max-width: 100%; }
+
+:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; border-radius: 6px; }
+::selection { background: rgba(139, 92, 246, .35); }
+
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.skip-link { position: fixed; top: 10px; left: 10px; z-index: 100; padding: 8px 14px; border-radius: 10px; background: var(--accent-strong); color: #fff; text-decoration: none; transform: translateY(-160%); transition: transform .2s; }
+.skip-link:focus { transform: none; }
+.muted { color: var(--text-2); }
+.hint { margin-top: 12px; color: var(--text-3); font-size: 12px; line-height: 1.55; }
+.eyebrow { color: var(--text-3); font-size: 10.5px; font-weight: 650; letter-spacing: .13em; text-transform: uppercase; }
+.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.nowrap { white-space: nowrap; }
+
+/* ---------- Forms ---------- */
+label { display: grid; gap: 6px; color: var(--text-2); font-size: 12.5px; font-weight: 550; }
+input, select, textarea {
+  width: 100%; min-height: 40px; padding: 9px 12px;
+  border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
+  background: var(--input-bg); color: var(--text); font-size: 13.5px;
+  transition: border-color .15s, box-shadow .15s, background-color .15s;
+}
+input::placeholder, textarea::placeholder { color: var(--text-3); }
+input:hover, select:hover, textarea:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line-strong)); }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft), 0 0 0 1px var(--accent); }
+textarea { min-height: 96px; resize: vertical; }
+select { appearance: none; padding-right: 34px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238089A8' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 11px center; }
+select option { background: var(--surface-solid); color: var(--text); }
+input[type='checkbox'] { width: 16px; min-height: 16px; height: 16px; accent-color: var(--accent); padding: 0; }
+input[type='file'] { padding: 7px 10px; min-height: 40px; color: var(--text-2); font-size: 12.5px; }
+input[type='file']::file-selector-button { margin-right: 10px; padding: 5px 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface-2); color: var(--text); cursor: pointer; }
+input[type='date'], input[type='month'], input[type='datetime-local'] { color-scheme: inherit; }
+.check-label { display: flex; align-items: center; gap: 9px; }
+
+/* ---------- Buttons ---------- */
+.button {
+  position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 40px; padding: 0 16px; border: 1px solid transparent; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 600; line-height: 1; white-space: nowrap;
+  transition: transform .15s var(--ease), box-shadow .2s, background-color .2s, border-color .2s, opacity .2s;
+}
+.button:active:not(:disabled) { transform: translateY(1px) scale(.985); }
+.button:disabled { opacity: .5; }
+.button-primary { color: #fff; background: var(--accent-grad); box-shadow: 0 8px 22px -10px rgba(124, 58, 237, .75), 0 1px 0 rgba(255, 255, 255, .25) inset; }
+.button-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 14px 28px -10px rgba(124, 58, 237, .85), 0 1px 0 rgba(255, 255, 255, .3) inset; }
+.button-secondary { color: var(--text); background: var(--surface-2); border-color: var(--line-strong); }
+.button-secondary:hover:not(:disabled) { background: var(--surface-hover); border-color: color-mix(in srgb, var(--accent) 50%, var(--line-strong)); }
+.button-quiet { color: var(--text-2); background: transparent; }
+.button-quiet:hover:not(:disabled) { color: var(--text); background: var(--surface-hover); }
+.button-danger { color: var(--danger); background: var(--danger-soft); border-color: color-mix(in srgb, var(--danger) 35%, transparent); }
+.button-danger:hover:not(:disabled) { background: color-mix(in srgb, var(--danger) 22%, transparent); }
+.button-small { min-height: 32px; padding: 0 12px; font-size: 12px; border-radius: 9px; }
+.button.wide { width: 100%; min-height: 44px; }
+.text-button { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; margin-left: 4px; border: 0; border-radius: 8px; background: transparent; color: var(--accent-text); font-size: 12.5px; font-weight: 600; transition: background-color .15s; }
+.text-button:hover { background: var(--accent-soft); }
+.icon-button { display: inline-grid; place-items: center; width: 38px; height: 38px; padding: 0; border: 1px solid var(--line); border-radius: 11px; background: var(--surface-2); color: var(--text-2); transition: color .15s, background-color .15s, border-color .15s, transform .15s; }
+.icon-button:hover { color: var(--text); background: var(--surface-hover); border-color: var(--line-strong); }
+.icon-button:active { transform: scale(.94); }
+.flip { transform: rotate(180deg); }
+.hide-sm { display: inline; }
+
+/* ---------- Scrollbars ---------- */
+* { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }

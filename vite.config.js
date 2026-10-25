@@ -17,6 +17,7 @@ export default defineConfig({
     }
   },
   build: {
+    chunkSizeWarningLimit: 900,
     rollupOptions: {
       output: {
         manualChunks(id) {
@@ -24,6 +25,9 @@ export default defineConfig({
           if (!normalizedId.includes('/node_modules/')) return undefined;
           if (/\/node_modules\/(recharts|d3-[^/]+|victory-vendor)\//.test(normalizedId)) return 'charts';
           if (/\/node_modules\/(motion|framer-motion)\//.test(normalizedId)) return 'motion';
+          if (normalizedId.includes('/node_modules/gsap/')) return 'gsap';
+          if (normalizedId.includes('/node_modules/three/')) return 'three-vendor';
+          if (/\/node_modules\/(@react-three|three-stdlib)\//.test(normalizedId)) return 'r3f-vendor';
           if (normalizedId.includes('/node_modules/lucide-react/')) return 'icons';
           if (/\/node_modules\/(react|react-dom|scheduler)\//.test(normalizedId)) return 'react-vendor';
           return undefined;
