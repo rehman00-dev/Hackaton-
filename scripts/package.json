@@ -1,0 +1,33 @@
+{
+  "name": "hcm-lite",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Saylani HCM Lite challenge project",
+  "main": "server.js",
+  "scripts": {
+    "server": "node server.js",
+    "client": "vite --host 0.0.0.0 --port 5173",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "build": "vite build",
+    "db:migrate-admin": "node scripts/migrate-admin-to-supabase.js",
+    "admin:reset-password": "node scripts/reset-admin-password.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "^0.10.22",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.23.1",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "vite": "^5.4.10"
+  }
+}
