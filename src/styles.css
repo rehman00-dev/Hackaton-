@@ -1563,3 +1563,29 @@ tbody tr:hover td:first-child { box-shadow: inset 2px 0 #8b5cf6; }
   }
   .loading-skeletons span, .loading-skeleton { animation: none; }
 }
+
+.brand-logo {
+  display: block;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(139, 92, 246, .19);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.brand:hover .brand-logo { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(139, 92, 246, .28); }
+.brand-logo.large {
+  width: 60px;
+  height: 60px;
+  flex-basis: 60px;
+  margin: 0 0 30px;
+  border-radius: 17px;
+}
+.auth-aside .brand-logo.large { margin: 0 0 30px; }
+@media (max-width: 520px) {
+  .brand-logo { width: 34px; height: 34px; flex-basis: 34px; border-radius: 10px; }
+  .auth-aside .brand-logo.large { width: 48px; height: 48px; flex-basis: 48px; margin: 0 0 12px; border-radius: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .brand-logo { transition: none; }
+}
