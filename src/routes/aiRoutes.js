@@ -5,6 +5,14 @@ const { collection, currentTimestamp, objectId } = require('../db');
 const asyncHandler = require('../utils/asyncHandler');
 const { localDate } = require('../utils/dateUtils');
 
+const AI_LOG_RETENTION_DAYS = 30;
+
+async function pruneAiLogs() {
+  const cutoff = new Date(Date.now() - AI_LOG_RETENTION_DAYS * 24 * 60 * 60 * 1000)
+    .toISOString().slice(0, 19).replace('T', ' ');
+  await collection('aiLogs').deleteMany({ created_at: { $lt: cutoff } });
+}
+
 router.use(authenticateToken, requireUserScope);
 
 function providerFailure(status, details = '') {
@@ -169,7 +177,7 @@ async function executeTool(name, user) {
   }
   if (name === 'get_my_leave_balance' && user.role === 'employee') {
     const types = await collection('leaveTypes').find().toArray();
-    const year = new Date().getFullYear();
+    const year = Number(localDate().slice(0, 4));
     const company = await collection('companies').findOne({}, { sort: { _id: 1 }, projection: { weekend: 1 } });
     const weekendDays = String(company?.weekend || 'SAT-SUN').split('-').map((day) =>
       ({ SUN: 0, MON: 1, TUE: 2, WED: 3, THU: 4, FRI: 5, SAT: 6 }[day])).filter(Number.isInteger);
@@ -220,6 +228,7 @@ async function executeTool(name, user) {
 router.post('/chat', asyncHandler(async (req, res) => {
   const message = String(req.body.message || '').trim();
   if (!message || message.length > 2000) return res.status(400).json({ message: 'Enter a message (maximum 2,000 characters)' });
+  await pruneAiLogs();
   const cutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
   const recentCalls = await collection('aiLogs').countDocuments({ user_id: req.user.id, created_at: { $gte: cutoff } });
   if (recentCalls >= 20) return res.status(429).json({ message: 'AI request limit reached. Please try again later.' });
@@ -276,6 +285,7 @@ router.post('/smart-leave', asyncHandler(async (req, res) => {
   if (req.user.role !== 'employee') return res.status(403).json({ message: 'Smart leave is available to employees only' });
   const prompt = String(req.body.prompt || '').trim();
   if (!prompt || prompt.length > 500) return res.status(400).json({ message: 'Describe your leave in 1–500 characters' });
+  await pruneAiLogs();
   const cutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
   const recentCalls = await collection('aiLogs').countDocuments({ user_id: req.user.id, created_at: { $gte: cutoff } });
   if (recentCalls >= 20) return res.status(429).json({ message: 'AI request limit reached. Please try again later.' });

@@ -4,7 +4,7 @@ const { authenticateToken, authorizeRoles, requireUserScope } = require('../midd
 const { apiDocument, collection, currentTimestamp, objectId, withTransaction } = require('../db');
 const asyncHandler = require('../utils/asyncHandler');
 const { audit } = require('../services/auditService');
-const { localDate } = require('../utils/dateUtils');
+const { localDate, localTimeMinutes } = require('../utils/dateUtils');
 
 router.use(authenticateToken, requireUserScope, authorizeRoles('employee'));
 
@@ -104,7 +104,7 @@ router.post('/checkin', asyncHandler(async (req, res) => {
   const now = new Date();
   const startTime = (company?.office_hours || '09:00-17:00').split('-')[0] || '09:00';
   const [hour, minute] = startTime.split(':').map(Number);
-  const lateMinutes = Math.max(0, now.getHours() * 60 + now.getMinutes() - (hour * 60 + minute) - Number(company?.grace_minutes ?? 15));
+  const lateMinutes = Math.max(0, localTimeMinutes(now) - (hour * 60 + minute) - Number(company?.grace_minutes ?? 15));
   const status = lateMinutes > 0 ? 'late' : 'present';
   try {
     const result = await attendances.insertOne({
@@ -158,7 +158,7 @@ router.post('/leave', asyncHandler(async (req, res) => {
   const requestedDays = workingDays(startDate, endDate, holidays, weekends);
   if (!requestedDays) return res.status(422).json({ message: 'The selected range contains no working days' });
   if (type.annual_quota !== null) {
-    const year = new Date().getFullYear();
+    const year = Number(localDate().slice(0, 4));
     const used = await leaveRequests.find({
       user_id: req.user.id,
       leave_type: type.name,
@@ -191,7 +191,7 @@ router.get('/leave', asyncHandler(async (req, res) => {
     collection('leaveRequests').find({ user_id: req.user.id }).sort({ created_at: -1 }).limit(200).toArray(),
     collection('leaveTypes').find().sort({ name_folded: 1 }).toArray()
   ]);
-  const year = new Date().getFullYear();
+  const year = Number(localDate().slice(0, 4));
   const holidays = new Set((await collection('holidays').find({ date: { $regex: `^${year}-` } }).toArray()).map((row) => row.date));
   const company = await collection('companies').findOne({}, { sort: { _id: 1 } });
   const weekends = weekendIndices(company?.weekend);

@@ -7,7 +7,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const { createUser } = require('../services/authService');
 const { audit, notify } = require('../services/auditService');
 const { parseCsv } = require('../utils/parseCsv');
-const { localDate } = require('../utils/dateUtils');
+const { localDate, localTimeMinutes } = require('../utils/dateUtils');
 
 router.use(authenticateToken, requireUserScope, authorizeRoles('admin', 'hr'));
 
@@ -363,7 +363,7 @@ router.post('/corrections/:id/review', asyncHandler(async (req, res) => {
       const [hour, minute] = startTime.split(':').map(Number);
       const inTime = checkIn ? new Date(checkIn) : null;
       const lateMinutes = inTime
-        ? Math.max(0, inTime.getHours() * 60 + inTime.getMinutes() - (hour * 60 + minute) - Number(company?.grace_minutes ?? 15))
+        ? Math.max(0, localTimeMinutes(inTime) - (hour * 60 + minute) - Number(company?.grace_minutes ?? 15))
         : 0;
       let status = lateMinutes > 0 ? 'late' : 'present';
       if (checkIn && checkOut && (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 3600000 < 5) status = 'half_day';
@@ -449,12 +449,12 @@ router.post('/leave/:id/review', asyncHandler(async (req, res) => {
 router.post('/payroll/run', asyncHandler(async (req, res) => {
   const month = String(req.body.month || '');
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return res.status(400).json({ message: 'Month must use YYYY-MM format' });
-  const today = new Date();
-  const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+  const today = localDate();
+  const currentMonth = today.slice(0, 7);
   if (month > currentMonth) return res.status(400).json({ message: 'Payroll cannot be prepared for a future month' });
   const [year, monthNumber] = month.split('-').map(Number);
   const daysInMonth = new Date(year, monthNumber, 0).getDate();
-  const lastPayrollDay = month === currentMonth ? today.getDate() : daysInMonth;
+  const lastPayrollDay = month === currentMonth ? Number(today.slice(-2)) : daysInMonth;
   const company = await collection('companies').findOne({}, { sort: { _id: 1 } });
   const weekend = String(company?.weekend || 'SAT-SUN').split('-')
     .map((day) => ({ SUN: 0, MON: 1, TUE: 2, WED: 3, THU: 4, FRI: 5, SAT: 6 }[day])).filter(Number.isInteger);

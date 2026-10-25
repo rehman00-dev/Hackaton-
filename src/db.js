@@ -323,11 +323,68 @@ function collection(name) {
       );
       return { deletedCount: result.rowCount };
     },
+    async deleteMany(filter, options = {}) {
+      const values = [];
+      const where = buildFilter(name, filter, values);
+      const result = await execute(`DELETE FROM "${table}"${where}`, values, options.session);
+      return { deletedCount: result.rowCount };
+    },
     aggregate(pipeline = []) {
       return {
         async toArray() {
-          let rows = await createCursor(name, {}).toArray();
-          for (const stage of pipeline) {
+          const firstStageHasMatch = Boolean(pipeline[0] && Object.hasOwn(pipeline[0], '$match'));
+          const firstMatch = firstStageHasMatch ? pipeline[0].$match : {};
+          const groupIndex = pipeline.findIndex((stage) => stage.$group);
+          const group = groupIndex >= 0 ? pipeline[groupIndex].$group : null;
+          const groupIsImmediatelyAfterMatch = groupIndex === (firstStageHasMatch ? 1 : 0);
+          const groupKey = group?._id === null
+            ? 'NULL'
+            : typeof group?._id === 'string' && group._id.startsWith('$')
+              ? quoteColumn(name, group._id.slice(1))
+              : null;
+          const sumFields = group
+            ? Object.entries(group).filter(([field]) => field !== '_id')
+            : [];
+          const canAggregateInDatabase = Boolean(
+            groupIsImmediatelyAfterMatch &&
+            groupKey &&
+            sumFields.every(([field, operation]) =>
+              /^[A-Za-z_][A-Za-z0-9_]*$/.test(field) &&
+              operation?.$sum !== undefined &&
+              (operation.$sum === 1 || (typeof operation.$sum === 'string' && operation.$sum.startsWith('$') &&
+                allowedColumns[name].includes(operation.$sum.slice(1))))
+            )
+          );
+          let rows;
+          let stages;
+          if (canAggregateInDatabase) {
+            const values = [];
+            const where = buildFilter(name, firstMatch, values);
+            const selectedFields = [
+              `${groupKey} AS "_id"`,
+              ...sumFields.map(([field, operation]) => {
+                const value = operation.$sum === 1
+                  ? 'COUNT(*)'
+                  : `COALESCE(SUM(${quoteColumn(name, operation.$sum.slice(1))}), 0)`;
+                return `${value} AS "${field}"`;
+              })
+            ];
+            const groupBy = group._id === null ? '' : ` GROUP BY ${groupKey}`;
+            const having = group._id === null ? ' HAVING COUNT(*) > 0' : '';
+            const result = await execute(
+              `SELECT ${selectedFields.join(', ')} FROM "${collectionTables[name]}"${where}${groupBy}${having}`,
+              values
+            );
+            rows = result.rows.map((row) => Object.fromEntries(Object.entries(row).map(([field, value]) => [
+              field,
+              field === '_id' ? value : Number(value)
+            ])));
+            stages = pipeline.slice(groupIndex + 1);
+          } else {
+            rows = await createCursor(name, firstMatch).toArray();
+            stages = firstStageHasMatch ? pipeline.slice(1) : pipeline;
+          }
+          for (const stage of stages) {
             if (stage.$match) {
               rows = rows.filter((row) => matchesFilter(row, stage.$match));
             } else if (stage.$group) {

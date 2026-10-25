@@ -4,7 +4,7 @@ AI-assisted human capital management for Admin, HR, and employees. This project 
 
 ## Requirements
 
-- Node.js 20 or newer
+- Node.js 20.19+ or 22.12+
 - npm
 - A modern browser
 - A Supabase project
@@ -19,7 +19,7 @@ AI-assisted human capital management for Admin, HR, and employees. This project 
 5. Install packages with `npm install`, then run `npm run dev`.
 6. Open `http://localhost:5173`. If you did not migrate an Admin account, complete first-run setup to create one.
 
-The API runs at `http://localhost:5000`. `npm run build` creates the production frontend in `dist`; run `npm start` with `NODE_ENV=production` to serve it from Express. In production, set `DATABASE_URL`, a strong `JWT_SECRET`, and `CLIENT_ORIGIN` to the frontend's exact origin (comma-separated if you use more than one).
+The API runs at `http://localhost:5000`. `npm run build` creates the production frontend in `dist`; run `npm start` with `NODE_ENV=production` to serve it from Express. In production, set `DATABASE_URL`, a strong `JWT_SECRET`, and `CLIENT_ORIGIN` to the frontend's exact origin (comma-separated if you use more than one). Set `APP_TIME_ZONE` to the company's IANA time-zone identifier (for example, `Asia/Karachi`) so attendance and payroll dates do not depend on the host's time zone.
 
 This app uses its Express backend for login and database access. Supabase `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` values are not used by this frontend login flow. Do not put a PostgreSQL password, service-role key, or full `DATABASE_URL` in a frontend environment variable or share it in chat.
 
@@ -73,6 +73,7 @@ Location is requested only during check-in. If an Admin configures both office c
 - Payroll needs your jurisdiction/currency, tax and contribution rules, salary structure, and approved attendance/leave deduction policy before it can be treated as real payroll.
 - Face detection is only a local presence check; biometric identity matching is intentionally not performed.
 - The backend requires a reachable Supabase PostgreSQL database. Use HTTPS, secure secret management, backups, request rate limiting, and a security review before handling real employee data.
+- Login is limited to 10 attempts per IP every 15 minutes; first-run setup is limited to 5 attempts per IP per hour. AI prompts and responses are retained; entries older than 30 days are pruned whenever an AI request is made.
 
 ## Useful commands
 

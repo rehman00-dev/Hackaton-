@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { FaceDetector, FilesetResolver } from '@mediapipe/tasks-vision';
 
 const API = '/api';
 const roleMenus = {
@@ -490,6 +489,7 @@ function CameraAttendance({ submit, busy }) {
     setCameraError('');
     try {
       if (!navigator.mediaDevices?.getUserMedia) throw new Error('Camera access requires HTTPS or localhost and a supported browser.');
+      const { FaceDetector, FilesetResolver } = await import('@mediapipe/tasks-vision');
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
       streamRef.current = stream;
       if (videoRef.current) {

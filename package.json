@@ -19,15 +19,16 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.2",
+    "express-rate-limit": "^8.7.1",
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.23.1",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^6.0.1"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.4",
+    "@vitejs/plugin-react": "^5.2.0",
     "concurrently": "^9.1.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "vite": "^5.4.10"
+    "vite": "^7.3.7"
   }
 }
