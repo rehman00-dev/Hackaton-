@@ -19,7 +19,7 @@ AI-assisted human capital management for Admin, HR, and employees. This project 
 5. Install packages with `npm install`, then run `npm run dev`.
 6. Open `http://localhost:5173`. If you did not migrate an Admin account, complete first-run setup to create one.
 
-The API runs at `http://localhost:5000`. `npm run build` creates the production frontend in `dist`; run `npm start` with `NODE_ENV=production` to serve it from Express. In production, set `DATABASE_URL`, a strong `JWT_SECRET`, and `CLIENT_ORIGIN` to the frontend's exact origin (comma-separated if you use more than one). Set `APP_TIME_ZONE` to the company's IANA time-zone identifier (for example, `Asia/Karachi`) so attendance and payroll dates do not depend on the host's time zone.
+The API runs at `http://localhost:5000`. `npm run build` creates the production frontend in `dist`; run `npm start` with `NODE_ENV=production` to serve it from Express. For Render, use `npm ci --include=dev && npm run build` as the Build Command so Vite and its build plugins are installed even when `NODE_ENV=production`. In production, set `DATABASE_URL`, a strong `JWT_SECRET`, and `CLIENT_ORIGIN` to the frontend's exact origin (comma-separated if you use more than one). Set `APP_TIME_ZONE` to the company's IANA time-zone identifier (for example, `Asia/Karachi`) so attendance and payroll dates do not depend on the host's time zone.
 
 This app uses its Express backend for login and database access. Supabase `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` values are not used by this frontend login flow. Do not put a PostgreSQL password, service-role key, or full `DATABASE_URL` in a frontend environment variable or share it in chat.
 

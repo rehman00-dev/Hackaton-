@@ -15,5 +15,20 @@ export default defineConfig({
         changeOrigin: true,
       }
     }
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          const normalizedId = id.replace(/\\/g, '/');
+          if (!normalizedId.includes('/node_modules/')) return undefined;
+          if (/\/node_modules\/(recharts|d3-[^/]+|victory-vendor)\//.test(normalizedId)) return 'charts';
+          if (/\/node_modules\/(motion|framer-motion)\//.test(normalizedId)) return 'motion';
+          if (normalizedId.includes('/node_modules/lucide-react/')) return 'icons';
+          if (/\/node_modules\/(react|react-dom|scheduler)\//.test(normalizedId)) return 'react-vendor';
+          return undefined;
+        }
+      }
+    }
   }
 });

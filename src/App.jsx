@@ -1,4 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, useTransform } from 'motion/react';
+import {
+  Activity, Bell, CalendarDays, ClipboardCheck, ClipboardList, Clock3, LayoutDashboard,
+  LogOut, MessageCircle, Settings as SettingsIcon, UserRound, UsersRound, Wallet
+} from 'lucide-react';
+import {
+  Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis
+} from 'recharts';
 
 const API = '/api';
 const roleMenus = {
@@ -11,6 +19,21 @@ const labels = {
   payroll: 'Payroll', payslips: 'Payslips', settings: 'Company setup', announcements: 'Announcements',
   audit: 'Audit log', profile: 'My profile', notifications: 'Notifications', assistant: 'AI assistant'
 };
+const navigationIcons = {
+  overview: LayoutDashboard,
+  employees: UsersRound,
+  attendance: Clock3,
+  leave: CalendarDays,
+  payroll: Wallet,
+  payslips: ClipboardList,
+  settings: SettingsIcon,
+  announcements: Bell,
+  audit: ClipboardCheck,
+  profile: UserRound,
+  notifications: Bell,
+  assistant: MessageCircle
+};
+const chartColors = ['#8B5CF6', '#22D3EE', '#34D399', '#FBBF24', '#FB7185'];
 
 function token() {
   return localStorage.getItem('hcm_token');
@@ -73,7 +96,7 @@ function App() {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState(null);
   const [reloadKey, setReloadKey] = useState(0);
-  useDepthEffects();
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     const resetSession = () => {
@@ -198,7 +221,6 @@ function App() {
 
   return (
     <div className="app-shell">
-      <Scene3D />
       <header className="topbar">
         <a className="brand" href="#" onClick={(event) => { event.preventDefault(); setNotice(null); setPage('overview'); }}>
           <span className="brand-mark">H</span>
@@ -207,21 +229,22 @@ function App() {
         <div className="user-tools">
           <span className="avatar">{user.name.slice(0, 1).toUpperCase()}</span>
           <div className="user-info"><strong>{user.name}</strong><small>{user.role}</small></div>
-          <button className="button button-quiet" onClick={logout}>Sign out</button>
+          <button className="button button-quiet" onClick={logout}><LogOut size={15} aria-hidden="true" />Sign out</button>
         </div>
       </header>
       <div className="workspace">
         <nav className="sidebar" aria-label="Workspace navigation">
           <div className="nav-label">Workspace</div>
           {roleMenus[user.role]?.map((item) => (
-            <button key={item} className={`nav-link ${page === item ? 'active' : ''}`} aria-current={page === item ? 'page' : undefined} onClick={() => { setNotice(null); setPage(item); }}>
-              <span className="nav-icon">{navIcon(item)}</span>{labels[item]}
-            </button>
+            <motion.button key={item} className={`nav-link ${page === item ? 'active' : ''}`} aria-current={page === item ? 'page' : undefined} onClick={() => { setNotice(null); setPage(item); }} whileHover={reduceMotion ? undefined : { x: 2 }} whileTap={reduceMotion ? undefined : { scale: 0.98 }}>
+              {page === item && <motion.span className="nav-active-indicator" layoutId="active-navigation" transition={{ type: 'spring', stiffness: 400, damping: 34 }} />}
+              <span className="nav-icon"><NavIcon name={item} /></span>{labels[item]}
+            </motion.button>
           ))}
           <div className="sidebar-foot"><span className="online-dot" /> Secure workspace <small>HCM LITE · 2026</small></div>
         </nav>
         <main className="main-content" id="main-content" aria-busy={loadingPage}>
-          {notice && <div className={`notice ${notice.type}`} role="status">{notice.text}<button onClick={() => setNotice(null)} aria-label="Dismiss">×</button></div>}
+          <AnimatePresence initial={false}>{notice && <motion.div key={`${notice.type}-${notice.text}`} className={`notice ${notice.type}`} role="status" initial={reduceMotion ? false : { opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={reduceMotion ? undefined : { opacity: 0, y: -4 }} transition={{ duration: reduceMotion ? 0 : 0.18 }}>{notice.text}<button onClick={() => setNotice(null)} aria-label="Dismiss">×</button></motion.div>}</AnimatePresence>
           <div className="page-heading">
             <div><p className="eyebrow">{user.role} workspace</p><h1>{labels[page]}</h1></div>
             <div className="today">{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</div>
@@ -230,7 +253,15 @@ function App() {
             ? <LoadError message={loadError} onRetry={() => setReloadKey((value) => value + 1)} />
             : page !== 'assistant' && dataPage !== page
               ? <PageLoading title={labels[page]} />
-              : <>
+              : <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={page}
+                  className="page-transition"
+                  initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={reduceMotion ? undefined : { opacity: 0, y: -5 }}
+                  transition={{ duration: reduceMotion ? 0 : 0.2, ease: 'easeOut' }}
+                >
                 {loadError && dataPage === page && <div className="notice error load-warning" role="alert"><span>Could not refresh this page: {loadError}</span><button className="button button-quiet" onClick={() => setReloadKey((value) => value + 1)}>Retry</button></div>}
                 {page === 'overview' && <Overview data={data} user={user} go={(nextPage) => { setNotice(null); setPage(nextPage); }} />}
                 {page === 'employees' && <Employees data={data} user={user} submit={submit} busy={busy} reload={() => setReloadKey((n) => n + 1)} />}
@@ -243,7 +274,8 @@ function App() {
                 {page === 'profile' && <Profile data={data} submit={submit} busy={busy} />}
                 {page === 'notifications' && <Notifications data={data} submit={submit} />}
                 {page === 'assistant' && <Assistant />}
-              </>}
+                </motion.div>
+              </AnimatePresence>}
           {page !== 'assistant' && loadingPage && dataPage === page && <div className="refresh-indicator" role="status">Updating this page…</div>}
         </main>
       </div>
@@ -251,9 +283,9 @@ function App() {
   );
 }
 
-function navIcon(name) {
-  const icons = { overview: '◫', employees: '♙', attendance: '◷', leave: '▤', payroll: '＄', payslips: '▧', settings: '⚙', announcements: '▣', audit: '◉', profile: '♙', notifications: '♢', assistant: '✳' };
-  return icons[name] || '•';
+function NavIcon({ name }) {
+  const Icon = navigationIcons[name] || Activity;
+  return <Icon size={17} strokeWidth={1.8} aria-hidden="true" />;
 }
 
 function LoginScreen({ onLogin, notice }) {
@@ -267,7 +299,7 @@ function LoginScreen({ onLogin, notice }) {
     try { await onLogin(form); } catch (e) { setError(e.message); } finally { setBusy(false); }
   }
   return (
-    <main className="auth-layout"><Scene3D />
+    <main className="auth-layout">
       <section className="auth-aside"><span className="brand-mark large">H</span><p className="eyebrow">HUMAN CAPITAL, SIMPLIFIED</p><h1>Better workdays start with better people operations.</h1><p>Attendance, leave, payroll and insight — designed around the people who make your company.</p><div className="auth-stat"><strong>One workspace.</strong><span>Clear, connected HR workflows.</span></div></section>
       <section className="auth-form-wrap"><form className="auth-card" onSubmit={handleSubmit}><p className="eyebrow">WELCOME BACK</p><h2>Sign in to HCM Lite</h2><p className="muted">Use the account your Admin or HR team created.</p><label>Email address<input type="email" autoComplete="username" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></label><label>Password<input type="password" autoComplete="current-password" required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} /></label>{error && <div className="notice error">{error}</div>}{notice && <div className={`notice ${notice.type}`}>{notice.text}</div>}<button className="button button-primary wide" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'} <span>→</span></button><small className="muted">New installation? Create the first Admin account from setup.</small></form></section>
     </main>
@@ -284,7 +316,7 @@ function SetupScreen({ onSetup, notice }) {
     setError('');
     try { await onSetup(form); } catch (e) { setError(e.message); } finally { setBusy(false); }
   }
-  return <main className="auth-layout"><Scene3D /><section className="auth-aside"><span className="brand-mark large">H</span><p className="eyebrow">FIRST-RUN SETUP</p><h1>Start with your company and its first Admin.</h1><p>This creates your company workspace. HR can then add departments and register employees.</p></section><section className="auth-form-wrap"><form className="auth-card" onSubmit={handleSubmit}><p className="eyebrow">GET STARTED</p><h2>Set up your workspace</h2><p className="muted">No sample employee data is added.</p><label>Company name<input required value={form.companyName} onChange={(e) => setForm({ ...form, companyName: e.target.value })} /></label><label>Admin full name<input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></label><label>Admin email<input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></label><label>Admin password (8+ characters)<input type="password" minLength={8} required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} /></label>{error && <div className="notice error">{error}</div>}{notice && <div className={`notice ${notice.type}`}>{notice.text}</div>}<button className="button button-primary wide" disabled={busy}>{busy ? 'Creating workspace…' : 'Create workspace'}</button></form></section></main>;
+  return <main className="auth-layout"><section className="auth-aside"><span className="brand-mark large">H</span><p className="eyebrow">FIRST-RUN SETUP</p><h1>Start with your company and its first Admin.</h1><p>This creates your company workspace. HR can then add departments and register employees.</p></section><section className="auth-form-wrap"><form className="auth-card" onSubmit={handleSubmit}><p className="eyebrow">GET STARTED</p><h2>Set up your workspace</h2><p className="muted">No sample employee data is added.</p><label>Company name<input required value={form.companyName} onChange={(e) => setForm({ ...form, companyName: e.target.value })} /></label><label>Admin full name<input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></label><label>Admin email<input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></label><label>Admin password (8+ characters)<input type="password" minLength={8} required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} /></label>{error && <div className="notice error">{error}</div>}{notice && <div className={`notice ${notice.type}`}>{notice.text}</div>}<button className="button button-primary wide" disabled={busy}>{busy ? 'Creating workspace…' : 'Create workspace'}</button></form></section></main>;
 }
 
 function ChangePasswordScreen({ onChange }) {
@@ -298,14 +330,14 @@ function ChangePasswordScreen({ onChange }) {
     setBusy(true);
     try { await onChange(form); } catch (e) { setError(e.message); } finally { setBusy(false); }
   }
-  return <main className="auth-layout"><Scene3D /><section className="auth-aside"><span className="brand-mark large">H</span><p className="eyebrow">ACCOUNT SECURITY</p><h1>One quick step before you get started.</h1><p>This temporary password must be replaced with a password you have not used before.</p></section><section className="auth-form-wrap"><form className="auth-card" onSubmit={handleSubmit}><p className="eyebrow">PASSWORD UPDATE REQUIRED</p><h2>Choose a new password</h2><label>Current temporary password<input type="password" required value={form.currentPassword} onChange={(e) => setForm({ ...form, currentPassword: e.target.value })} /></label><label>New password (8+ characters)<input type="password" minLength={8} required value={form.newPassword} onChange={(e) => setForm({ ...form, newPassword: e.target.value })} /></label><label>Confirm new password<input type="password" minLength={8} required value={form.confirmPassword} onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })} /></label>{error && <div className="notice error">{error}</div>}<button className="button button-primary wide" disabled={busy}>{busy ? 'Updating…' : 'Update password'}</button></form></section></main>;
+  return <main className="auth-layout"><section className="auth-aside"><span className="brand-mark large">H</span><p className="eyebrow">ACCOUNT SECURITY</p><h1>One quick step before you get started.</h1><p>This temporary password must be replaced with a password you have not used before.</p></section><section className="auth-form-wrap"><form className="auth-card" onSubmit={handleSubmit}><p className="eyebrow">PASSWORD UPDATE REQUIRED</p><h2>Choose a new password</h2><label>Current temporary password<input type="password" required value={form.currentPassword} onChange={(e) => setForm({ ...form, currentPassword: e.target.value })} /></label><label>New password (8+ characters)<input type="password" minLength={8} required value={form.newPassword} onChange={(e) => setForm({ ...form, newPassword: e.target.value })} /></label><label>Confirm new password<input type="password" minLength={8} required value={form.confirmPassword} onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })} /></label>{error && <div className="notice error">{error}</div>}<button className="button button-primary wide" disabled={busy}>{busy ? 'Updating…' : 'Update password'}</button></form></section></main>;
 }
 
 function Overview({ data, user, go }) {
   if (!data) return <EmptyState title="Loading your overview" />;
   if (user.role === 'employee') return <div className="page-stack">
     <div className="welcome-panel"><div><p className="eyebrow">YOUR WORKDAY</p><h2>Good to see you, {user.name.split(' ')[0]}.</h2><p>Keep track of your hours, leave and latest payslip here.</p></div><button className="button button-primary" onClick={() => go('attendance')}>Open attendance →</button></div>
-    <div className="stats-grid"><Stat title="Today's status" value={data.attendance?.status || 'Not checked in'} hint={data.attendance?.check_in ? `In at ${formatTime(data.attendance.check_in)}` : 'Attendance'} /><Stat title="Approved leave" value={data.approvedLeaveCount ?? 0} hint="Requests" /><Stat title="Last payslip" value={data.lastPayslip ? money(data.lastPayslip.net_salary) : '—'} hint={data.lastPayslip?.month || 'Not available yet'} /></div>
+    <div className="stats-grid"><Stat title="Today's status" value={data.attendance?.status || 'Not checked in'} hint={data.attendance?.check_in ? `In at ${formatTime(data.attendance.check_in)}` : 'Attendance'} /><Stat title="Approved leave" value={data.approvedLeaveCount ?? 0} hint="Requests" delay={0.07} /><Stat title="Last payslip" value={data.lastPayslip ? money(data.lastPayslip.net_salary) : '—'} hint={data.lastPayslip?.month || 'Not available yet'} delay={0.14} /></div>
     <Card title="Company announcements"><AnnouncementList rows={data.announcements} /></Card>
   </div>;
   const totals = Object.fromEntries((data.attendanceToday || []).map((row) => [row.status, row.count]));
@@ -313,7 +345,43 @@ function Overview({ data, user, go }) {
   const statItems = user.role === 'admin'
     ? [['Headcount', data.headcount ?? 0, 'Active employees'], ['Present today', totals.present || 0, 'Checked in'], ['Pending leave', leaves.pending || 0, 'Needs review'], ['Payroll cost', money(data.finalizedPayroll || 0), 'Finalized payroll']]
     : [['Headcount', data.headcount ?? 0, 'Active employees'], ['Present today', (totals.present || 0) + (totals.late || 0), 'Checked in'], ['Pending leave', leaves.pending || 0, 'Needs review'], ['Finalized payroll', money(data.finalizedPayroll || 0), 'Net total']];
-  return <div className="page-stack"><div className="welcome-panel"><div><p className="eyebrow">{user.role === 'admin' ? 'COMPANY OVERVIEW' : 'PEOPLE OPERATIONS'}</p><h2>Here’s what’s happening today.</h2><p>Your dashboard reflects activity recorded in this workspace.</p></div><button className="button button-secondary" onClick={() => go('assistant')}>✳ Ask assistant</button></div><div className="stats-grid">{statItems.map(([title, value, hint]) => <Stat key={title} title={title} value={value} hint={hint} />)}</div><div className="content-grid"><Card title="Attendance today"><DataTable columns={['Status', 'Count']} rows={data.attendanceToday || []} keys={['status', 'count']} empty="No attendance recorded today." /></Card><Card title="Leave requests"><DataTable columns={['Status', 'Requests']} rows={data.leaveRequests || []} keys={['status', 'count']} empty="No leave requests yet." /></Card></div><Card title="Employees by department"><DataTable columns={['Department', 'Employees']} rows={data.departments || []} keys={['name', user.role === 'admin' ? 'count' : 'employees']} empty="Create departments and register employees to see this breakdown." /></Card></div>;
+  const departmentCountKey = user.role === 'admin' ? 'count' : 'employees';
+  return <div className="page-stack"><div className="welcome-panel"><div><p className="eyebrow">{user.role === 'admin' ? 'COMPANY OVERVIEW' : 'PEOPLE OPERATIONS'}</p><h2>Here’s what’s happening today.</h2><p>Your dashboard reflects activity recorded in this workspace.</p></div><button className="button button-secondary" onClick={() => go('assistant')}><MessageCircle size={15} aria-hidden="true" />Ask assistant</button></div><div className="stats-grid">{statItems.map(([title, value, hint], index) => <Stat key={title} title={title} value={value} hint={hint} delay={index * 0.07} />)}</div><div className="content-grid"><Card title="Attendance today"><StatusDonut data={data.attendanceToday || []} nameKey="status" valueKey="count" empty="No attendance recorded today." /></Card><Card title="Leave requests"><StatusDonut data={data.leaveRequests || []} nameKey="status" valueKey="count" empty="No leave requests yet." /></Card></div><Card title="Employees by department"><DepartmentChart data={data.departments || []} valueKey={departmentCountKey} empty="Create departments and register employees to see this breakdown." /></Card></div>;
+}
+
+function StatusDonut({ data, nameKey, valueKey, empty }) {
+  const reduceMotion = useReducedMotion();
+  if (!data.length) return <EmptyState title={empty} />;
+  return <div className="chart-layout">
+    <div className="chart-visual" role="img" aria-label={`${data.map((row) => `${row[nameKey]}: ${row[valueKey]}`).join(', ')}`}>
+      <ResponsiveContainer width="100%" height={190}>
+        <PieChart>
+          <Pie data={data} dataKey={valueKey} nameKey={nameKey} innerRadius={56} outerRadius={78} paddingAngle={3} stroke="none" isAnimationActive={!reduceMotion}>
+            {data.map((row, index) => <Cell key={row[nameKey]} fill={chartColors[index % chartColors.length]} />)}
+          </Pie>
+          <Tooltip contentStyle={{ border: '1px solid #303a55', borderRadius: 10, background: '#171E33', color: '#f8fafc' }} itemStyle={{ color: '#f8fafc' }} />
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
+    <ul className="chart-legend" aria-label="Chart values">
+      {data.map((row, index) => <li key={row[nameKey]}><span className="chart-legend-label"><i style={{ background: chartColors[index % chartColors.length] }} />{String(row[nameKey]).replaceAll('_', ' ')}</span><strong>{row[valueKey]}</strong></li>)}
+    </ul>
+  </div>;
+}
+
+function DepartmentChart({ data, valueKey, empty }) {
+  const reduceMotion = useReducedMotion();
+  if (!data.length) return <EmptyState title={empty} />;
+  return <div className="department-chart" role="img" aria-label={`Employees by department: ${data.map((row) => `${row.name}: ${row[valueKey]}`).join(', ')}`}>
+    <ResponsiveContainer width="100%" height={Math.max(190, data.length * 42)}>
+      <BarChart data={data} layout="vertical" margin={{ top: 4, right: 20, bottom: 4, left: 8 }}>
+        <XAxis type="number" allowDecimals={false} tick={{ fill: '#9aa6bf', fontSize: 11 }} axisLine={false} tickLine={false} />
+        <YAxis type="category" dataKey="name" width={110} tick={{ fill: '#c4cce0', fontSize: 11 }} axisLine={false} tickLine={false} />
+        <Tooltip cursor={{ fill: 'rgba(139, 92, 246, .08)' }} contentStyle={{ border: '1px solid #303a55', borderRadius: 10, background: '#171E33', color: '#f8fafc' }} itemStyle={{ color: '#f8fafc' }} />
+        <Bar dataKey={valueKey} name="Employees" fill="#8B5CF6" radius={[0, 6, 6, 0]} isAnimationActive={!reduceMotion} />
+      </BarChart>
+    </ResponsiveContainer>
+  </div>;
 }
 
 function Employees({ data, user, submit, busy, reload }) {
@@ -623,13 +691,14 @@ function Notifications({ data, submit }) {
 }
 
 function Assistant() {
+  const reduceMotion = useReducedMotion();
   const [messages, setMessages] = useState([{ from: 'assistant', text: 'Ask about your HR data or company policies. I only use information permitted for your role.' }]);
   const [prompt, setPrompt] = useState('');
   const [busy, setBusy] = useState(false);
   const chatEndRef = useRef(null);
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, [messages, busy]);
+    chatEndRef.current?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'end' });
+  }, [messages, busy, reduceMotion]);
   async function send(event) {
     event.preventDefault();
     if (busy) return;
@@ -648,8 +717,8 @@ function Assistant() {
   return <div className="assistant-card card">
     <div className="assistant-header"><span className="assistant-mark">✳</span><div><h2>HCM assistant</h2><p className="muted">Answers are scoped to your role and grounded in HCM data.</p></div><Status value="Role scoped" /></div>
     <div className="chat-log" role="log" aria-live="polite" aria-relevant="additions">
-      {messages.map((item, index) => <div className={`chat-message ${item.from} ${item.error ? 'chat-error' : ''}`} key={`${index}-${item.text}`}><p>{item.text}</p>{item.label && <small>{item.label}</small>}</div>)}
-      {busy && <div className="chat-message" role="status"><p>Thinking…</p></div>}
+      <AnimatePresence initial={false}>{messages.map((item, index) => <motion.div initial={reduceMotion ? false : { opacity: 0, y: 8, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={reduceMotion ? undefined : { opacity: 0 }} transition={{ duration: reduceMotion ? 0 : 0.18 }} className={`chat-message ${item.from} ${item.error ? 'chat-error' : ''}`} key={`${index}-${item.text}`}><p>{item.text}</p>{item.label && <small>{item.label}</small>}</motion.div>)}</AnimatePresence>
+      {busy && <motion.div initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} className="chat-message" role="status"><p>Thinking…</p></motion.div>}
       <div ref={chatEndRef} />
     </div>
     <form className="chat-form" onSubmit={send}><input aria-label="Ask a question" value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="e.g. Who is on leave today?" maxLength={2000} /><button className="button button-primary" disabled={busy || !prompt.trim()}>{busy ? 'Thinking…' : 'Send'}</button></form>
@@ -657,101 +726,30 @@ function Assistant() {
   </div>;
 }
 
-// ---- Visual-only 3D layer: pointer parallax, card tilt and the animated background scene ----
-function useDepthEffects() {
-  useEffect(() => {
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-    if (reduce || !finePointer) return undefined;
-    const root = document.documentElement;
-    const targets = [['.stat-card', 9], ['.welcome-panel', 3.5], ['.auth-card', 4], ['.card', 1.3]];
-    let frame = 0;
-    let lastEvent = null;
-    let active = null;
-    const release = (element) => {
-      if (!element) return;
-      element.classList.remove('is-tilting');
-      element.style.removeProperty('--rx');
-      element.style.removeProperty('--ry');
-    };
-    const onMove = (event) => {
-      lastEvent = event;
-      if (frame) return;
-      frame = requestAnimationFrame(() => {
-        frame = 0;
-        const e = lastEvent;
-        if (!e) return;
-        root.style.setProperty('--px', (e.clientX / window.innerWidth - 0.5).toFixed(3));
-        root.style.setProperty('--py', (e.clientY / window.innerHeight - 0.5).toFixed(3));
-        const origin = e.target instanceof Element ? e.target : null;
-        let element = null;
-        let max = 0;
-        if (origin) {
-          for (const [selector, degrees] of targets) {
-            const hit = origin.closest(selector);
-            if (hit) { element = hit; max = degrees; break; }
-          }
-        }
-        if (active && active !== element) release(active);
-        active = element;
-        if (!element) return;
-        const focused = document.activeElement;
-        if (focused && element.contains(focused) && /^(INPUT|SELECT|TEXTAREA)$/.test(focused.tagName)) { release(element); return; }
-        const box = element.getBoundingClientRect();
-        const x = (e.clientX - box.left) / box.width;
-        const y = (e.clientY - box.top) / box.height;
-        element.classList.add('is-tilting');
-        element.style.setProperty('--rx', `${((0.5 - y) * max * 2).toFixed(2)}deg`);
-        element.style.setProperty('--ry', `${((x - 0.5) * max * 2).toFixed(2)}deg`);
-        element.style.setProperty('--mx', `${(x * 100).toFixed(1)}%`);
-        element.style.setProperty('--my', `${(y * 100).toFixed(1)}%`);
-      });
-    };
-    const onLeave = () => { release(active); active = null; };
-    document.addEventListener('pointermove', onMove, { passive: true });
-    document.documentElement.addEventListener('mouseleave', onLeave);
-    return () => {
-      document.removeEventListener('pointermove', onMove);
-      document.documentElement.removeEventListener('mouseleave', onLeave);
-      if (frame) cancelAnimationFrame(frame);
-      release(active);
-    };
-  }, []);
-}
-
-const SCENE_CUBES = [
-  { left: '5%', top: '17%', size: 66, delay: '0s', duration: '28s' },
-  { left: '89%', top: '22%', size: 92, delay: '-6s', duration: '34s' },
-  { left: '76%', top: '70%', size: 54, delay: '-12s', duration: '24s' },
-  { left: '11%', top: '74%', size: 78, delay: '-3s', duration: '31s' },
-  { left: '47%', top: '88%', size: 42, delay: '-18s', duration: '22s' }
-];
-
-function Scene3D() {
-  return (
-    <div className="scene3d" aria-hidden="true">
-      <div className="scene-stage">
-        <div className="scene-floor" />
-        <span className="scene-orb scene-orb-a" />
-        <span className="scene-orb scene-orb-b" />
-        <span className="scene-ring scene-ring-a" />
-        <span className="scene-ring scene-ring-b" />
-        {SCENE_CUBES.map((cube, index) => (
-          <div key={index} className={`scene-cube scene-cube-${index}`} style={{ left: cube.left, top: cube.top, '--size': `${cube.size}px`, '--delay': cube.delay, '--duration': cube.duration }}>
-            {['front', 'back', 'right', 'left', 'top', 'bottom'].map((face) => <i key={face} className={`face face-${face}`} />)}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function Card({ title, subtitle, children }) {
   return <section className="card"><div className="card-heading"><div><h2>{title}</h2>{subtitle && <p className="muted">{subtitle}</p>}</div></div>{children}</section>;
 }
 
-function Stat({ title, value, hint }) {
-  return <article className="stat-card"><span className="eyebrow">{title}</span><strong>{value}</strong><small>{hint}</small></article>;
+function Stat({ title, value, hint, delay = 0 }) {
+  const reduceMotion = useReducedMotion();
+  const numericValue = typeof value === 'number' || /^\d+$/.test(String(value)) ? Number(value) : null;
+  const count = useMotionValue(numericValue ?? 0);
+  const countLabel = useTransform(count, (current) => Math.round(current).toLocaleString());
+  useEffect(() => {
+    if (numericValue === null) return undefined;
+    if (reduceMotion) {
+      count.set(numericValue);
+      return undefined;
+    }
+    count.set(0);
+    const controls = animate(count, numericValue, { duration: 0.65, delay, ease: 'easeOut' });
+    return () => controls.stop();
+  }, [count, delay, numericValue, reduceMotion]);
+  return <motion.article className="stat-card" initial={reduceMotion ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: reduceMotion ? 0 : 0.3, delay: reduceMotion ? 0 : delay }}>
+    <span className="eyebrow">{title}</span>
+    {numericValue === null || reduceMotion ? <strong>{value}</strong> : <motion.strong>{countLabel}</motion.strong>}
+    <small>{hint}</small>
+  </motion.article>;
 }
 
 function DataTable({ columns, rows, keys, empty, renderRow }) {
@@ -764,11 +762,15 @@ function Status({ value }) {
 }
 
 function EmptyState({ title, description }) {
-  return <div className="empty-state"><span>◌</span><strong>{title}</strong>{description && <p>{description}</p>}</div>;
+  return <div className="empty-state"><span><Activity size={19} aria-hidden="true" /></span><strong>{title}</strong>{description && <p>{description}</p>}</div>;
 }
 
 function PageLoading({ title }) {
-  return <div className="page-loading" role="status" aria-live="polite"><span className="loading-spinner" />Loading {title.toLowerCase()}…</div>;
+  return <div className="page-loading" role="status" aria-live="polite">
+    <div className="loading-label"><span className="loading-spinner" />Loading {title.toLowerCase()}…</div>
+    <div className="loading-skeletons" aria-hidden="true"><span /><span /><span /></div>
+    <div className="loading-skeleton wide" aria-hidden="true" />
+  </div>;
 }
 
 function LoadError({ message, onRetry }) {
