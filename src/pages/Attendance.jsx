@@ -132,6 +132,7 @@ function CameraAttendance({ submit, busy }) {
       if (!navigator.mediaDevices?.getUserMedia) throw new Error('Camera access requires HTTPS or localhost and a supported browser.');
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
       streamRef.current = stream;
+      setCamera(true);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
@@ -157,12 +158,15 @@ function CameraAttendance({ submit, busy }) {
       stream.getTracks()[0].addEventListener('ended', () => window.clearInterval(intervalRef.current), { once: true });
     } catch (error) {
       window.clearInterval(intervalRef.current);
-      streamRef.current?.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
       detectorRef.current?.close();
       detectorRef.current = null;
-      if (videoRef.current) videoRef.current.srcObject = null;
-      setCamera(false);
+      setFaceFound(false);
+      if (stage !== 'face detection') {
+        streamRef.current?.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+        if (videoRef.current) videoRef.current.srcObject = null;
+        setCamera(false);
+      }
       const errorName = error?.name;
       const message = stage === 'face detection'
         ? 'The camera opened, but face detection could not load. Check your internet connection and try again, or use the regular check-in button.'
