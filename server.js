@@ -1,8 +1,3 @@
-const clientBuildPath = path.join(__dirname, 'dist');
-app.use(express.static(clientBuildPath));
-app.get('*', (req, res) => {
-  res.sendFile(path.join(clientBuildPath, 'index.html'));
-});
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
@@ -79,9 +74,9 @@ app.use((error, req, res, next) => {
 });
 
 if (isProduction) {
-  app.use(express.static(path.join(__dirname, 'public')));
+  app.use(express.static(path.join(__dirname, 'dist')));
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
   });
 } else {
   app.get('/', (req, res) => {
