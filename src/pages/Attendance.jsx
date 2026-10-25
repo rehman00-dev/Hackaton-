@@ -127,15 +127,17 @@ function CameraAttendance({ submit, busy }) {
   async function startCamera() {
     setStarting(true);
     setCameraError('');
+    let stage = 'camera';
     try {
       if (!navigator.mediaDevices?.getUserMedia) throw new Error('Camera access requires HTTPS or localhost and a supported browser.');
-      const { FaceDetector, FilesetResolver } = await import('@mediapipe/tasks-vision');
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
       }
+      stage = 'face detection';
+      const { FaceDetector, FilesetResolver } = await import('@mediapipe/tasks-vision');
       const vision = await FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm');
       detectorRef.current = await FaceDetector.createFromOptions(vision, {
         baseOptions: { modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite' },
@@ -156,7 +158,26 @@ function CameraAttendance({ submit, busy }) {
     } catch (error) {
       window.clearInterval(intervalRef.current);
       streamRef.current?.getTracks().forEach((track) => track.stop());
-      setCameraError(error.message || 'Camera could not be started.');
+      streamRef.current = null;
+      detectorRef.current?.close();
+      detectorRef.current = null;
+      if (videoRef.current) videoRef.current.srcObject = null;
+      setCamera(false);
+      const errorName = error?.name;
+      const message = stage === 'face detection'
+        ? 'The camera opened, but face detection could not load. Check your internet connection and try again, or use the regular check-in button.'
+        : errorName === 'NotAllowedError' || errorName === 'PermissionDeniedError'
+          ? 'Camera permission was denied. Allow camera access for this site in your browser’s site settings, then try again. You can also use the regular check-in button.'
+          : errorName === 'NotFoundError' || errorName === 'DevicesNotFoundError'
+            ? 'No camera was found. Connect or enable a camera, then try again, or use the regular check-in button.'
+            : errorName === 'NotReadableError' || errorName === 'TrackStartError'
+              ? 'The camera is unavailable or being used by another app. Close other apps using it and try again, or use the regular check-in button.'
+              : errorName === 'OverconstrainedError' || errorName === 'ConstraintNotSatisfiedError'
+                ? 'The available camera could not be started with the requested settings. Try another camera or use the regular check-in button.'
+                : !window.isSecureContext
+                  ? 'Camera access requires a secure HTTPS connection (or localhost). Open the site over HTTPS, or use the regular check-in button.'
+                  : error?.message || 'The camera could not be started. Check browser camera permission and that the camera is not in use.';
+      setCameraError(message);
     } finally {
       setStarting(false);
     }
